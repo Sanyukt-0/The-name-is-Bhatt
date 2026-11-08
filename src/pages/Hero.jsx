@@ -115,7 +115,15 @@ const Hero = () => {
 
       {/* ── Profile photo ── */}
       <div ref={imgRef} className="hero-img-wrap">
-        <img src={pfp} alt="Sanyukt" className="hero-img" />
+        <img
+          src={pfp}
+          alt="Sanyukt Bhatt - Creative Game Developer & Engine Systems Engineer"
+          className="hero-img"
+          fetchpriority="high"
+          decoding="async"
+          width="900"
+          height="502"
+        />
         {/* directional gradient to fade grey studio bg into dark */}
         <div className="hero-img-blend" aria-hidden="true" />
       </div>

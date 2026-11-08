@@ -8,4 +8,25 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('gsap') || id.includes('@gsap')) {
+              return 'vendor-gsap';
+            }
+            if (id.includes('lenis')) {
+              return 'vendor-lenis';
+            }
+          }
+        }
+      }
+    }
+  }
 })

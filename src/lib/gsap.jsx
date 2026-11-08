@@ -1,9 +1,7 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 
-gsap.registerPlugin(ScrollTrigger, SplitText, MorphSVGPlugin);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
-export { MorphSVGPlugin };
 export default gsap;

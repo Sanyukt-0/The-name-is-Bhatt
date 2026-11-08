@@ -94,6 +94,9 @@ const Contact = () => {
           alt="Character Graphic"
           className="contact-char-render-img"
           loading="lazy"
+          decoding="async"
+          width="750"
+          height="1046"
         />
         <div className="contact-char-render-glow" />
       </div>

@@ -4,12 +4,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import MagneticBtn from './MagneticBtn'
 
 // Game engineering backdrop renders
-import fpsCover from '../assets/Games/FPS/cinematic_sci_fi_fps_action_key_art_1_on_1_intimate_close_quarters_combat.png'
-import fpsDuel from '../assets/Games/FPS/cinematic_sci_fi_fps_key_art_intense_1_on_1_close_quarters_combat_duel_on_a.png'
-import fpsInterior from '../assets/Games/FPS/cinematic_sci_fi_fps_key_art_intimate_1_on_1_close_quarters_combat_duel_inside.png'
-import owsCover from '../assets/Games/One Wrong Step/official_cinematic_video_game_cover_key_art_for_a_3d_sci_fi_puzzle_platformer.png'
-import soulsWideDark from '../assets/Games/SoulsLike/dark_gothic_fantasy_souls_like_digital_oil_painting._wide_cinematic_16_9_aspect.png'
-import soulsCenter from '../assets/Games/SoulsLike/dark_gothic_fantasy_souls_like_digital_oil_painting._in_the_center_of_the_frame.png'
+import fpsCover from '../assets/Games/posters/fpsCover.jpg'
+import fpsDuel from '../assets/Games/posters/fpsDuel.jpg'
+import fpsInterior from '../assets/Games/posters/fpsInterior.jpg'
+import owsCover from '../assets/Games/posters/owsCover.jpg'
+import soulsWideDark from '../assets/Games/posters/soulsWideDark.jpg'
+import soulsCenter from '../assets/Games/posters/soulsCenter.jpg'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -1248,7 +1248,7 @@ const UnwovenSkills = () => {
   const [selectedModal, setSelectedModal] = useState(null)
   const [isDraggingState, setIsDraggingState] = useState(false)
 
-  // Dynamic Three.js loader check
+  // Dynamic Three.js lazy loader via IntersectionObserver
   const [threeReady, setThreeReady] = useState(Boolean(window.THREE))
 
   const scrollTriggerInstanceRef = useRef(null)
@@ -1258,13 +1258,42 @@ const UnwovenSkills = () => {
       setThreeReady(true)
       return
     }
-    const checkTimer = setInterval(() => {
+
+    const loadThree = () => {
       if (window.THREE) {
         setThreeReady(true)
-        clearInterval(checkTimer)
+        return
       }
-    }, 100)
-    return () => clearInterval(checkTimer)
+      if (document.getElementById('three-cdn-script')) return
+      const script = document.createElement('script')
+      script.id = 'three-cdn-script'
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+      script.async = true
+      script.onload = () => {
+        setThreeReady(true)
+      }
+      document.head.appendChild(script)
+    }
+
+    if (!sectionRef.current) {
+      loadThree()
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadThree()
+            observer.disconnect()
+          }
+        })
+      },
+      { rootMargin: '600px 0px' }
+    )
+
+    observer.observe(sectionRef.current)
+    return () => observer.disconnect()
   }, [])
 
   /* ═══════════════════════════════════════════════════════════════════

@@ -1,11 +1,11 @@
 import FlowingMenu from '../components/FlowingMenu';
 import MagneticBtn from '../components/MagneticBtn';
 
-import fps1 from '../assets/Games/FPS/cinematic_sci_fi_fps_action_key_art_1_on_1_intimate_close_quarters_combat.png';
-import fps2 from '../assets/Games/FPS/cinematic_sci_fi_fps_key_art_intense_1_on_1_close_quarters_combat_duel_on_a.png';
-import ows from '../assets/Games/One Wrong Step/official_cinematic_video_game_cover_key_art_for_a_3d_sci_fi_puzzle_platformer.png';
-import soul from '../assets/Games/SoulsLike/wide_cinematic_16_9_aspect_ratio_artwork_for_pc._a_solitary_weary_knight_in.png';
-import soul2 from '../assets/Games/SoulsLike/dark_gothic_fantasy_souls_like_digital_oil_painting._in_the_center_of_the_frame.png';
+import fps1 from '../assets/Games/thumbnails/fps1.jpg';
+import fps2 from '../assets/Games/thumbnails/fps2.jpg';
+import ows from '../assets/Games/thumbnails/ows.jpg';
+import soul from '../assets/Games/thumbnails/soul1.jpg';
+import soul2 from '../assets/Games/thumbnails/soul2.jpg';
 
 const GAME_SERVICES = [
   {

@@ -5,12 +5,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SANYUKTbgSVG from './SANYUKTbgSVG';
 
 // Portfolio images for the trail effect
-import fps1 from '../assets/Games/FPS/cinematic_sci_fi_fps_action_key_art_1_on_1_intimate_close_quarters_combat.png';
-import fps2 from '../assets/Games/FPS/cinematic_sci_fi_fps_key_art_intense_1_on_1_close_quarters_combat_duel_on_a.png';
-import fps3 from '../assets/Games/FPS/cinematic_sci_fi_fps_key_art_intimate_1_on_1_close_quarters_combat_duel_inside.png';
-import ows from '../assets/Games/One Wrong Step/official_cinematic_video_game_cover_key_art_for_a_3d_sci_fi_puzzle_platformer.png';
-import soul1 from '../assets/Games/SoulsLike/wide_cinematic_16_9_aspect_ratio_artwork_for_pc._a_solitary_weary_knight_in.png';
-import soul2 from '../assets/Games/SoulsLike/dark_gothic_fantasy_souls_like_digital_oil_painting._in_the_center_of_the_frame.png';
+import fps1 from '../assets/Games/thumbnails/fps1.jpg';
+import fps2 from '../assets/Games/thumbnails/fps2.jpg';
+import fps3 from '../assets/Games/posters/fpsCover.jpg';
+import ows from '../assets/Games/thumbnails/ows.jpg';
+import soul1 from '../assets/Games/thumbnails/soul1.jpg';
+import soul2 from '../assets/Games/thumbnails/soul2.jpg';
 import charImg from '../assets/character-render.png';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -227,9 +227,9 @@ const Footer = () => {
           <div>
             <h4 className="footer-dp-col-title">Follow Me</h4>
             <div className="footer-dp-socials">
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="footer-dp-social-btn">in</a>
-              <a href="https://github.com"   target="_blank" rel="noreferrer" className="footer-dp-social-btn">GH</a>
-              <a href="https://itch.io"      target="_blank" rel="noreferrer" className="footer-dp-social-btn">IO</a>
+              <a href="https://www.linkedin.com/in/sanyukt-bhatt/" target="_blank" rel="noreferrer" className="footer-dp-social-btn">in</a>
+              <a href="https://github.com/Sanyukt-0"   target="_blank" rel="noreferrer" className="footer-dp-social-btn">GH</a>
+              <a href="https://ludusdev.itch.io/"      target="_blank" rel="noreferrer" className="footer-dp-social-btn">IO</a>
               <a href="https://twitter.com"  target="_blank" rel="noreferrer" className="footer-dp-social-btn">TW</a>
             </div>
           </div>
@@ -254,16 +254,16 @@ const Footer = () => {
         <div className="footer-dp-col">
           <div>
             <h3 className="footer-dp-col-heading">Location</h3>
-            <p className="footer-dp-col-text">New Delhi, India</p>
+            <p className="footer-dp-col-text">Haryana</p>
           </div>
           <div>
             <h3 className="footer-dp-col-heading">Contact Me</h3>
             <div className="footer-dp-contact-list">
               <p className="footer-dp-contact-item">
-                <span>📞</span> +91 000 000 0000
+                <span>📞</span> +91 989 977 9158
               </p>
               <p className="footer-dp-contact-item">
-                <span>✉</span> sanyukt@example.com
+                <span>✉</span> sanyuktbhatt.doon@gmail.com
               </p>
             </div>
           </div>

@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState } from 'react';
 
 // Key Art posters for video loading / fallback
-import fpsCover from '../assets/Games/FPS/cinematic_sci_fi_fps_action_key_art_1_on_1_intimate_close_quarters_combat.png';
-import owsCover from '../assets/Games/One Wrong Step/official_cinematic_video_game_cover_key_art_for_a_3d_sci_fi_puzzle_platformer.png';
-import soulsWide from '../assets/Games/SoulsLike/wide_cinematic_16_9_aspect_ratio_artwork_for_pc._a_solitary_weary_knight_in.png';
+import fpsCover from '../assets/Games/posters/fpsCover.jpg';
+import owsCover from '../assets/Games/posters/owsCover.jpg';
+import soulsWide from '../assets/Games/posters/soulsWide.jpg';
 
 /**
  * Game definitions with sample gameplay video streams.
@@ -78,6 +78,7 @@ const DiscographyProjects = () => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [shouldLoadIframe, setShouldLoadIframe] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -88,6 +89,24 @@ const DiscographyProjects = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Pre-load 3D iframe when approaching viewport
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShouldLoadIframe(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: '450px 0px' }
+    );
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // Forward wheel events from inside the 3D canvas iframe to the main page
   // and listen for CD-ROM player insertion events.
   useEffect(() => {
@@ -95,10 +114,29 @@ const DiscographyProjects = () => {
       // 1. Lenis scroll forwarding
       if (e.data?.type === 'DISCOGRAPHY_WHEEL') {
         const delta = e.data.deltaY;
-        if (window.__lenis) {
-          window.__lenis.scrollTo(window.scrollY + delta * 1.5, { immediate: true });
-        } else {
-          window.scrollBy({ top: delta, behavior: 'auto' });
+        if (!delta) return;
+
+        // Dispatch synthetic wheel event so Lenis handles it with its native smooth momentum curve
+        const syntheticWheel = new WheelEvent('wheel', {
+          deltaY: delta,
+          deltaX: e.data.deltaX || 0,
+          deltaMode: 0,
+          bubbles: true,
+          cancelable: true,
+        });
+        window.dispatchEvent(syntheticWheel);
+
+        // Fallback if Lenis didn't intercept or isn't active
+        if (!syntheticWheel.defaultPrevented) {
+          if (window.__lenis && typeof window.__lenis.targetScroll === 'number') {
+            window.__lenis.scrollTo(window.__lenis.targetScroll + delta, {
+              programmatic: false,
+              duration: window.__lenis.options?.duration || 1.0,
+              easing: window.__lenis.options?.easing,
+            });
+          } else {
+            window.scrollBy({ top: delta, behavior: 'smooth' });
+          }
         }
       }
 
@@ -165,33 +203,39 @@ const DiscographyProjects = () => {
       }}
     >
       {/* 3D CD-ROM Simulation Iframe */}
-      <iframe
-        ref={iframeRef}
-        src="/discography/index.html"
-        title="Game Projects Discography 3D Showcase"
-        allow="autoplay"
-        loading="lazy"
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          display: 'block',
-          backgroundColor: '#07070a',
-        }}
-      />
+      {shouldLoadIframe ? (
+        <iframe
+          ref={iframeRef}
+          src="/discography/index.html"
+          title="Game Projects Discography 3D Showcase"
+          allow="autoplay"
+          loading="lazy"
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            display: 'block',
+            backgroundColor: '#07070a',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#07070a',
+          }}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
-         TACTICAL SCI-FI GAMEPLAY VIDEO & INFO HUD (Clipped with User's SVG Blob)
+         MOBILE UNIFIED HUD CONSOLE
       ═══════════════════════════════════════════════════════════════ */}
-      <div
-        aria-label="Live Gameplay Feed HUD"
-        className={`discography-hud-panel ${showVideoHUD ? 'is-open' : ''}`}
-        style={{
-          filter:
-            'drop-shadow(0 25px 60px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 35px rgba(239, 81, 67, 0.28))',
-        }}
-      >
-        {isMobile ? (
+      {isMobile && (
+        <div
+          aria-label="Live Gameplay Feed HUD"
+          className={`discography-hud-panel ${showVideoHUD ? 'is-open' : ''}`}
+        >
           <div className="discography-mobile-hud-card">
             {/* Header */}
             <div className="dmh-header">
@@ -211,17 +255,26 @@ const DiscographyProjects = () => {
 
             {/* Video Viewport */}
             <div className="dmh-video-wrap">
-              <video
-                ref={videoRef}
-                key={currentGame.videoSrc}
-                src={currentGame.videoSrc}
-                poster={currentGame.poster}
-                autoPlay
-                loop
-                muted={isMuted}
-                playsInline
-                className="dmh-video"
-              />
+              {showVideoHUD ? (
+                <video
+                  ref={videoRef}
+                  key={currentGame.videoSrc}
+                  src={currentGame.videoSrc}
+                  poster={currentGame.poster}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  className="dmh-video"
+                />
+              ) : (
+                <img
+                  src={currentGame.poster}
+                  alt={currentGame.title}
+                  className="dmh-video"
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
               <div className="dmh-video-telemetry">
                 {currentGame.fov} // {currentGame.fps}
               </div>
@@ -238,15 +291,65 @@ const DiscographyProjects = () => {
 
             {/* Meta Row: Title, Subtitle, Engine Pill */}
             <div className="dmh-meta-row">
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                <h4 className="dmh-title">{currentGame.title}</h4>
-                <span className="dmh-subtitle">// {currentGame.subtitle}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <span style={{ fontFamily: "'MainFont', sans-serif", fontSize: '0.65rem', color: 'var(--main-color, #ef5143)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  {currentGame.genre}
+                </span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                  <h4 className="dmh-title">{currentGame.title}</h4>
+                  <span className="dmh-subtitle">// {currentGame.subtitle}</span>
+                </div>
               </div>
               <span className="dmh-engine-pill">{currentGame.engine}</span>
             </div>
 
-            {/* Summary */}
-            <p className="dmh-summary">{currentGame.summary}</p>
+            {/* Architectural Overview Card for Mobile */}
+            <div
+              style={{
+                backgroundColor: 'rgba(239, 81, 67, 0.08)',
+                border: '1px solid rgba(239, 81, 67, 0.35)',
+                borderLeft: '3px solid var(--main-color, #ef5143)',
+                borderRadius: '4px',
+                padding: '10px 14px',
+                margin: '4px 0',
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'MainFont', sans-serif",
+                  fontSize: '0.68rem',
+                  color: 'var(--main-color, #ef5143)',
+                  letterSpacing: '0.12em',
+                  marginBottom: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '5px',
+                    height: '5px',
+                    backgroundColor: 'var(--main-color, #ef5143)',
+                    borderRadius: '1px',
+                  }}
+                />
+                <span>// ARCHITECTURAL OVERVIEW</span>
+              </div>
+              <p
+                style={{
+                  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                  fontSize: '0.88rem',
+                  fontWeight: 500,
+                  color: '#ffffff',
+                  lineHeight: 1.55,
+                  margin: 0,
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+                }}
+              >
+                {currentGame.summary}
+              </p>
+            </div>
 
             {/* Tags */}
             <div className="dmh-tags">
@@ -258,507 +361,461 @@ const DiscographyProjects = () => {
               ))}
             </div>
           </div>
-        ) : (
-          <svg
-            viewBox="0 0 863 1028"
-            style={{
-              width: '100%',
-              height: '100%',
-              display: 'block',
-              overflow: 'visible',
-            }}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+         DESKTOP DUAL HUD: LEFT DETAILS DECK (BLOB CLIPPED) + RIGHT VIDEO MONITOR
+      ═══════════════════════════════════════════════════════════════ */}
+      {!isMobile && (
+        <>
+          {/* ── LEFT PANEL: PROJECT DETAILS DECK WITH SIGNATURE BLOB CLIPPATH ── */}
+          <div
+            aria-label="Project Architecture Details"
+            className={`discography-details-panel ${showVideoHUD ? 'is-open' : ''}`}
           >
-          <defs>
-            {/* The User's Exact Blob ClipPath */}
-            <clipPath id="game-blob-clip">
-              <path
-                id="game-blob-shape"
-                d="M402 30a332 332 0 01203 59q44 31 80 72A690 690 0 01792 345a1305 1305 0 0170 427c0 39-10 79-36 101s-62 30-95 42q-50 19-99 40t-98 39-102 28-109 5-108-24-85-57-50-93q-15-51-15-107t1-113l2-114q1-57-2-112t-11-110-11-110c2-35 12-78 42-93s74-8 108-16l102-29q52-16 106-19"
-              />
-            </clipPath>
-
-            <linearGradient id="blob-card-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0e0f16" stopOpacity="0.98" />
-              <stop offset="100%" stopColor="#07080d" stopOpacity="0.99" />
-            </linearGradient>
-          </defs>
-
-          {/* 1. SOLID CARD BASE (Guarantees card is NEVER empty/blank) */}
-          <path
-            d="M402 30a332 332 0 01203 59q44 31 80 72A690 690 0 01792 345a1305 1305 0 0170 427c0 39-10 79-36 101s-62 30-95 42q-50 19-99 40t-98 39-102 28-109 5-108-24-85-57-50-93q-15-51-15-107t1-113l2-114q1-57-2-112t-11-110-11-110c2-35 12-78 42-93s74-8 108-16l102-29q52-16 106-19"
-            fill="url(#blob-card-grad)"
-            stroke="rgba(239, 81, 67, 0.35)"
-            strokeWidth="3"
-          />
-
-          {/* 2. THE GLOWING OFFSET ACCENT STROKE (Matching user sample: x="-40" y="-27") */}
-          <use
-            href="#game-blob-shape"
-            x="-30"
-            y="-20"
-            fill="none"
-            stroke="var(--main-color, #ef5143)"
-            strokeWidth="7"
-            opacity="0.88"
-            style={{
-              pointerEvents: 'none',
-              filter: 'drop-shadow(0 0 16px rgba(239, 81, 67, 0.85))',
-            }}
-          />
-
-          {/* 3. CLIPPED FOREIGN OBJECT (Contains both the gameplay video and game info deck) */}
-          <g clipPath="url(#game-blob-clip)">
-            <foreignObject
-              x="0"
-              y="0"
-              width="863"
-              height="1028"
-              style={{ overflow: 'hidden' }}
+            <svg
+              viewBox="0 0 863 1028"
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                overflow: 'visible',
+                filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.9))',
+              }}
             >
-              <div
-                style={{
-                  width: '863px',
-                  height: '1028px',
-                  boxSizing: 'border-box',
-                  padding: '70px 75px 70px 80px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  position: 'relative',
-                  pointerEvents: 'auto',
-                }}
-              >
-                {/* Subtle Cyber Grid Background & Noise */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    backgroundImage:
-                      'linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
-                    backgroundSize: '28px 28px',
-                    zIndex: 1,
-                  }}
-                />
+              <defs>
+                {/* The Signature Blob ClipPath */}
+                <clipPath id="game-blob-clip">
+                  <path
+                    id="game-blob-shape"
+                    d="M402 30a332 332 0 01203 59q44 31 80 72A690 690 0 01792 345a1305 1305 0 0170 427c0 39-10 79-36 101s-62 30-95 42q-50 19-99 40t-98 39-102 28-109 5-108-24-85-57-50-93q-15-51-15-107t1-113l2-114q1-57-2-112t-11-110-11-110c2-35 12-78 42-93s74-8 108-16l102-29q52-16 106-19"
+                  />
+                </clipPath>
 
-                {/* ── TOP HUD HEADER BAR ── */}
-                <div
-                  style={{
-                    position: 'relative',
-                    zIndex: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingBottom: '14px',
-                    borderBottom: '2px solid rgba(239, 81, 67, 0.22)',
-                  }}
+                <linearGradient id="blob-card-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#0e0f16" stopOpacity="0.97" />
+                  <stop offset="100%" stopColor="#07080d" stopOpacity="0.99" />
+                </linearGradient>
+              </defs>
+
+              {/* 1. SOLID BLOB BASE */}
+              <path
+                d="M402 30a332 332 0 01203 59q44 31 80 72A690 690 0 01792 345a1305 1305 0 0170 427c0 39-10 79-36 101s-62 30-95 42q-50 19-99 40t-98 39-102 28-109 5-108-24-85-57-50-93q-15-51-15-107t1-113l2-114q1-57-2-112t-11-110-11-110c2-35 12-78 42-93s74-8 108-16l102-29q52-16 106-19"
+                fill="url(#blob-card-grad)"
+                stroke="rgba(239, 81, 67, 0.45)"
+                strokeWidth="3"
+              />
+
+              {/* 2. THE GLOWING OFFSET ACCENT OUTLINE */}
+              <use
+                href="#game-blob-shape"
+                x="-26"
+                y="-18"
+                fill="none"
+                stroke="var(--main-color, #ef5143)"
+                strokeWidth="6"
+                opacity="0.88"
+                style={{
+                  pointerEvents: 'none',
+                  filter: 'drop-shadow(0 0 16px rgba(239, 81, 67, 0.85))',
+                }}
+              />
+
+              {/* 3. CLIPPED FOREIGN OBJECT (Safe Inner Zone: padded strictly away from tapered edges) */}
+              <g clipPath="url(#game-blob-clip)">
+                <foreignObject
+                  x="0"
+                  y="0"
+                  width="863"
+                  height="1028"
+                  style={{ overflow: 'hidden' }}
                 >
-                  {/* Left: Recording Badge */}
                   <div
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%)',
-                      background: 'rgba(239, 81, 67, 0.16)',
-                      borderLeft: '4px solid var(--main-color, #ef5143)',
-                      padding: '8px 22px 8px 14px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--main-color, #ef5143)',
-                        boxShadow: '0 0 14px var(--main-color, #ef5143)',
-                        animation: 'sk-pulse 1.8s infinite ease-in-out',
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontFamily: "'SecondaryFont', monospace, sans-serif",
-                        fontSize: '18px',
-                        letterSpacing: '0.14em',
-                        color: '#ffffff',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      LIVE GAMEPLAY FEED // REC ●
-                    </span>
-
-                    {/* Animated 4-bar Audio / Optical Equalizer */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-end',
-                        gap: '4px',
-                        height: '20px',
-                        marginLeft: '6px',
-                      }}
-                    >
-                      {[10, 20, 14, 24].map((h, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            width: '3px',
-                            height: `${h}px`,
-                            backgroundColor: 'var(--main-color, #ef5143)',
-                            borderRadius: '1px',
-                            opacity: 0.85,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right: Chamfered Close Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsUserClosed(true)}
-                    aria-label="Close gameplay feed"
-                    style={{
-                      clipPath:
-                        'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)',
-                      width: '42px',
-                      height: '42px',
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      color: 'rgba(255, 255, 255, 0.85)',
-                      fontFamily: "'MainFont', sans-serif",
-                      fontSize: '20px',
+                      width: '863px',
+                      height: '1028px',
+                      boxSizing: 'border-box',
+                      padding: '135px 95px 120px 95px',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      position: 'relative',
                       pointerEvents: 'auto',
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'var(--main-color, #ef5143)';
-                      e.currentTarget.style.color = '#ffffff';
-                      e.currentTarget.style.borderColor = 'var(--main-color, #ef5143)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                    }}
                   >
-                    ✕
-                  </button>
-                </div>
-
-                {/* ── THE VIDEO WHERE GAMEPLAY WILL PLAY (Standard high-tech 16:9 viewport) ── */}
-                <div
-                  style={{
-                    position: 'relative',
-                    marginTop: '16px',
-                    aspectRatio: '16 / 9',
-                    background: '#020204',
-                    borderRadius: '10px',
-                    border: '2px solid rgba(239, 81, 67, 0.35)',
-                    overflow: 'hidden',
-                    zIndex: 10,
-                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.7)',
-                  }}
-                >
-                  <video
-                    ref={videoRef}
-                    key={currentGame.videoSrc}
-                    src={currentGame.videoSrc}
-                    poster={currentGame.poster}
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-
-                  {/* CRT Scanline & Grain Grid */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      pointerEvents: 'none',
-                      background:
-                        'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0, 0, 0, 0.4) 2px, rgba(0, 0, 0, 0.4) 4px)',
-                      opacity: 0.5,
-                      zIndex: 3,
-                    }}
-                  />
-
-                  {/* Top-Left Telemetry Readout */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      left: '14px',
-                      fontFamily: "'SecondaryFont', monospace, sans-serif",
-                      fontSize: '15px',
-                      letterSpacing: '0.1em',
-                      color: 'rgba(255, 255, 255, 0.9)',
-                      textTransform: 'uppercase',
-                      zIndex: 5,
-                      backgroundColor: 'rgba(5, 5, 8, 0.75)',
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      border: '1px solid rgba(239, 81, 67, 0.35)',
-                    }}
-                  >
-                    {currentGame.fov} // {currentGame.fps}
-                  </div>
-
-                  {/* Top-Right Chamfered Resolution Badge */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '14px',
-                      clipPath: 'polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)',
-                      background: 'var(--main-color, #ef5143)',
-                      color: '#ffffff',
-                      fontFamily: "'SecondaryFont', monospace, sans-serif",
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      padding: '4px 12px',
-                      zIndex: 5,
-                      boxShadow: '0 0 14px rgba(239, 81, 67, 0.7)',
-                    }}
-                  >
-                    {currentGame.resolution}
-                  </div>
-
-                  {/* Chamfered Tactical Control Buttons (Bottom Left) */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '12px',
-                      left: '14px',
-                      display: 'flex',
-                      gap: '10px',
-                      zIndex: 6,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={togglePlay}
+                    {/* Subtle Cyber Grid Background */}
+                    <div
                       style={{
-                        clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)',
-                        fontFamily: "'SecondaryFont', monospace, sans-serif",
-                        fontSize: '15px',
-                        letterSpacing: '0.08em',
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(12, 13, 18, 0.92)',
-                        border: '1px solid rgba(239, 81, 67, 0.65)',
-                        padding: '6px 14px',
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(8px)',
-                        pointerEvents: 'auto',
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        backgroundImage:
+                          'linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px)',
+                        backgroundSize: '28px 28px',
+                        zIndex: 1,
+                      }}
+                    />
+
+                    {/* ── TOP HUD HEADER BAR ── */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingBottom: '14px',
+                        borderBottom: '2px solid rgba(239, 81, 67, 0.25)',
                       }}
                     >
-                      {isPlaying ? 'PAUSE ❚❚' : 'PLAY ▶'}
-                    </button>
+                      {/* Left: Recording Badge */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          backgroundColor: 'rgba(239, 81, 67, 0.12)',
+                          border: '1px solid rgba(239, 81, 67, 0.4)',
+                          padding: '6px 14px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '9px',
+                            height: '9px',
+                            borderRadius: '50%',
+                            backgroundColor: 'var(--main-color, #ef5143)',
+                            boxShadow: '0 0 10px var(--main-color, #ef5143)',
+                            animation: 'sk-pulse 1.2s infinite ease-in-out',
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: "'MainFont', sans-serif",
+                            fontSize: '15px',
+                            color: 'var(--main-color, #ef5143)',
+                            letterSpacing: '0.12em',
+                          }}
+                        >
+                          REC ● {currentGame.code}
+                        </span>
+                      </div>
 
-                    <button
-                      type="button"
-                      onClick={toggleMute}
-                      style={{
-                        clipPath: 'polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%)',
-                        fontFamily: "'SecondaryFont', monospace, sans-serif",
-                        fontSize: '15px',
-                        letterSpacing: '0.08em',
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(12, 13, 18, 0.92)',
-                        border: '1px solid rgba(239, 81, 67, 0.65)',
-                        padding: '6px 14px',
-                        cursor: 'pointer',
-                        backdropFilter: 'blur(8px)',
-                        pointerEvents: 'auto',
-                      }}
-                    >
-                      {isMuted ? 'UNMUTE 🔊' : 'MUTE 🔇'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* ── LOWER SPECIFICATION & INFORMATION DECK ── */}
-                <div
-                  style={{
-                    position: 'relative',
-                    zIndex: 10,
-                    paddingTop: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                  }}
-                >
-                  {/* Title & Engine Row */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      justifyContent: 'space-between',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <h4
+                      {/* Right: Engine Badge */}
+                      <div
                         style={{
                           fontFamily: "'MainFont', sans-serif",
-                          fontSize: '26px',
+                          fontSize: '14px',
+                          letterSpacing: '0.1em',
+                          color: 'var(--main-color, #ef5143)',
+                          backgroundColor: 'rgba(239, 81, 67, 0.12)',
+                          border: '1px solid rgba(239, 81, 67, 0.4)',
+                          padding: '6px 14px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {currentGame.engine}
+                      </div>
+                    </div>
+
+                    {/* ── TITLE & SUBTITLE SECTION ── */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        marginTop: '2px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: "'MainFont', sans-serif",
+                          fontSize: '15px',
+                          letterSpacing: '0.14em',
+                          color: 'var(--main-color, #ef5143)',
+                          textTransform: 'uppercase',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {currentGame.genre}
+                      </div>
+
+                      <h3
+                        style={{
+                          fontFamily: "'MainFont', sans-serif",
+                          fontSize: '46px',
+                          letterSpacing: '0.04em',
+                          lineHeight: 1.05,
                           color: '#ffffff',
                           margin: 0,
-                          letterSpacing: '0.04em',
                           textTransform: 'uppercase',
-                          textShadow: '0 0 12px rgba(255, 255, 255, 0.25)',
+                          textShadow: '0 0 20px rgba(255, 255, 255, 0.35)',
                         }}
                       >
                         {currentGame.title}
-                      </h4>
-                      <span
+                      </h3>
+
+                      <div
                         style={{
-                          fontFamily: "'SecondaryFont', monospace, sans-serif",
-                          fontSize: '15px',
-                          color: 'rgba(255, 255, 255, 0.5)',
-                          letterSpacing: '0.08em',
+                          fontFamily: "'MainFont', sans-serif",
+                          fontSize: '18px',
+                          letterSpacing: '0.1em',
+                          color: 'rgba(255, 255, 255, 0.82)',
                         }}
                       >
                         // {currentGame.subtitle}
-                      </span>
+                      </div>
                     </div>
 
-                    {/* Engine Pill */}
+                    {/* ── THE SMALL DESCRIPTION (ARCHITECTURAL OVERVIEW) - PROMINENT, HIGH CONTRAST & FRAMED ── */}
                     <div
                       style={{
-                        background: 'rgba(239, 81, 67, 0.16)',
-                        border: '1px solid var(--main-color, #ef5143)',
-                        padding: '4px 14px',
-                        borderRadius: '4px',
-                        fontFamily: "'SecondaryFont', monospace, sans-serif",
-                        fontSize: '15px',
-                        color: 'var(--main-color, #ef5143)',
-                        fontWeight: 700,
-                        letterSpacing: '0.06em',
-                        whiteSpace: 'nowrap',
+                        position: 'relative',
+                        zIndex: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        backgroundColor: 'rgba(239, 81, 67, 0.08)',
+                        border: '1px solid rgba(239, 81, 67, 0.35)',
+                        borderLeft: '4px solid var(--main-color, #ef5143)',
+                        borderRadius: '6px',
+                        padding: '16px 20px',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(239, 81, 67, 0.06)',
                       }}
                     >
-                      {currentGame.engine}
-                    </div>
-                  </div>
-
-                  {/* Architecture Summary */}
-                  <p
-                    style={{
-                      fontFamily: "'SecondaryFont', sans-serif",
-                      fontSize: '17px',
-                      color: 'rgba(255, 255, 255, 0.75)',
-                      lineHeight: 1.45,
-                      margin: 0,
-                    }}
-                  >
-                    {currentGame.summary}
-                  </p>
-
-                  {/* Tactical Subsystem Badges */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                      marginTop: '4px',
-                    }}
-                  >
-                    {currentGame.tags.map((tag) => (
-                      <span
-                        key={tag}
+                      <div
                         style={{
-                          fontFamily: "'SecondaryFont', monospace, sans-serif",
+                          fontFamily: "'MainFont', sans-serif",
                           fontSize: '14px',
-                          letterSpacing: '0.06em',
-                          textTransform: 'uppercase',
-                          padding: '4px 12px',
-                          borderRadius: '4px',
-                          backgroundColor: 'rgba(239, 81, 67, 0.12)',
-                          border: '1px solid rgba(239, 81, 67, 0.35)',
-                          color: '#ffffff',
-                          display: 'inline-flex',
+                          letterSpacing: '0.14em',
+                          color: 'var(--main-color, #ef5143)',
+                          fontWeight: 700,
+                          display: 'flex',
                           alignItems: 'center',
-                          gap: '6px',
+                          gap: '8px',
                         }}
                       >
                         <span
                           style={{
                             width: '6px',
                             height: '6px',
-                            borderRadius: '50%',
+                            borderRadius: '1px',
                             backgroundColor: 'var(--main-color, #ef5143)',
                           }}
                         />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Hardware Telemetry Ruler & CD-ROM Speed */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingTop: '12px',
-                      marginTop: '6px',
-                      borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                      fontFamily: "'SecondaryFont', monospace, sans-serif",
-                      fontSize: '15px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      letterSpacing: '0.1em',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>STATUS: ACTIVE CD-ROM DRIVE</span>
-                      {/* 6-step Segmented LED gauge */}
-                      <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-                        {[1, 2, 3, 4, 5, 6].map((k) => (
-                          <span
-                            key={k}
-                            style={{
-                              width: '6px',
-                              height: '10px',
-                              backgroundColor: 'var(--main-color, #ef5143)',
-                              boxShadow: '0 0 6px var(--main-color, #ef5143)',
-                              borderRadius: '1px',
-                            }}
-                          />
-                        ))}
+                        <span>// ARCHITECTURAL OVERVIEW</span>
                       </div>
+
+                      <p
+                        style={{
+                          fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                          fontSize: '22px',
+                          fontWeight: 500,
+                          color: '#ffffff',
+                          lineHeight: 1.55,
+                          margin: 0,
+                          letterSpacing: '0.01em',
+                          textShadow: '0 1px 3px rgba(0, 0, 0, 0.9)',
+                        }}
+                      >
+                        {currentGame.summary}
+                      </p>
                     </div>
 
-                    <span
+                    {/* ── TACTICAL SUBSYSTEM BADGES ── */}
+                    <div
                       style={{
-                        color: 'var(--main-color, #ef5143)',
-                        fontWeight: 700,
-                        letterSpacing: '0.08em',
+                        position: 'relative',
+                        zIndex: 10,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '10px',
                       }}
                     >
-                      52X SPEED
-                    </span>
+                      {currentGame.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          style={{
+                            fontFamily: "'MainFont', sans-serif",
+                            fontSize: '14px',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#ffffff',
+                            backgroundColor: 'rgba(239, 81, 67, 0.16)',
+                            border: '1px solid rgba(239, 81, 67, 0.45)',
+                            padding: '6px 14px',
+                            borderRadius: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.35)',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              backgroundColor: 'var(--main-color, #ef5143)',
+                              boxShadow: '0 0 6px var(--main-color, #ef5143)',
+                            }}
+                          />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* ── HARDWARE TELEMETRY RULER ── */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 10,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingTop: '14px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+                        fontFamily: "'MainFont', sans-serif",
+                        fontSize: '15px',
+                        color: 'rgba(255, 255, 255, 0.75)',
+                        letterSpacing: '0.1em',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span>STATUS: ACTIVE CD-ROM DRIVE</span>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          {[1, 2, 3, 4, 5, 6].map((k) => (
+                            <span
+                              key={k}
+                              style={{
+                                width: '7px',
+                                height: '12px',
+                                backgroundColor: 'var(--main-color, #ef5143)',
+                                boxShadow: '0 0 8px var(--main-color, #ef5143)',
+                                borderRadius: '1px',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          color: 'var(--main-color, #ef5143)',
+                          fontWeight: 700,
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        52X SPEED
+                      </span>
+                    </div>
                   </div>
+                </foreignObject>
+              </g>
+            </svg>
+          </div>
+
+          {/* ── RIGHT PANEL: GAMEPLAY VIDEO MONITOR ── */}
+          <div
+            aria-label="Live Gameplay Video Monitor"
+            className={`discography-video-panel ${showVideoHUD ? 'is-open' : ''}`}
+          >
+            {/* Header: Monitor Label + Close Button */}
+            <div className="dvp-header">
+              <div className="dvp-monitor-label">
+                <span className="dmh-rec-dot" />
+                <span>LIVE GAMEPLAY FEED // MONITOR</span>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '14px', marginLeft: '6px' }}>
+                  {[8, 14, 10, 16].map((h, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: '2.5px',
+                        height: `${h}px`,
+                        backgroundColor: 'var(--main-color, #ef5143)',
+                        borderRadius: '1px',
+                        opacity: 0.85,
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
-            </foreignObject>
-          </g>
-        </svg>
-        )}
-      </div>
+
+              <button
+                type="button"
+                onClick={() => setIsUserClosed(true)}
+                className="dvp-close-btn"
+                aria-label="Close gameplay feed"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 16:9 Video Viewport */}
+            <div className="dvp-video-viewport">
+              {showVideoHUD ? (
+                <video
+                  ref={videoRef}
+                  key={currentGame.videoSrc}
+                  src={currentGame.videoSrc}
+                  poster={currentGame.poster}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  className="dvp-video"
+                />
+              ) : (
+                <img
+                  src={currentGame.poster}
+                  alt={currentGame.title}
+                  className="dvp-video"
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
+
+              {/* CRT Scanline & Grain Grid */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  pointerEvents: 'none',
+                  background:
+                    'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0, 0, 0, 0.4) 2px, rgba(0, 0, 0, 0.4) 4px)',
+                  opacity: 0.5,
+                  zIndex: 3,
+                }}
+              />
+
+              {/* Overlays */}
+              <div className="dvp-video-telemetry">
+                {currentGame.fov} // {currentGame.fps}
+              </div>
+              <div className="dvp-video-res">{currentGame.resolution}</div>
+
+              {/* Controls */}
+              <div className="dvp-video-controls">
+                <button type="button" className="dvp-ctrl-btn" onClick={togglePlay}>
+                  {isPlaying ? 'PAUSE ❚❚' : 'PLAY ▶'}
+                </button>
+                <button type="button" className="dvp-ctrl-btn" onClick={toggleMute}>
+                  {isMuted ? 'UNMUTE 🔊' : 'MUTE 🔇'}
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Telemetry Bar */}
+            <div className="dvp-bottom-bar">
+              <span>STREAM: LOW-LATENCY 60FPS</span>
+              <span style={{ color: 'var(--main-color, #ef5143)', fontWeight: 600 }}>OPTICAL FEED ONLINE</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════
          MANUAL PREVIEW TOGGLE PILL (Bottom Right — ONLY shown when CD is seated)

@@ -26,7 +26,7 @@ function FlowingMenu({
   speed = 12,
   fadeDuration = 0.28,
   revealEase = 'power2.out',
-  copies = 4,
+  copies = 3,
 }) {
   return (
     <div
@@ -37,6 +37,7 @@ function FlowingMenu({
         height: '100%',
         position: 'relative',
         overflow: 'hidden',
+        contain: 'paint layout',
       }}
     >
       <div
@@ -313,6 +314,7 @@ const MarqueeGroup = forwardRef(
           flexShrink: 0,
           gap: '2vw',
           paddingLeft: '2vw',
+          willChange: 'transform',
         }}
       >
         {/* Item A */}
@@ -331,18 +333,22 @@ const MarqueeGroup = forwardRef(
         >
           {text}
         </div>
-        <div
-          className={`flowing-menu-marquee-img ${imageWidth} ${imageHeight} ${imageRadius} bg-cover bg-center`}
+        <img
+          src={image}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className={`flowing-menu-marquee-img ${imageWidth} ${imageHeight} ${imageRadius}`}
           style={{
-            backgroundImage: `url(${image})`,
             width: 'clamp(120px, 14vw, 195px)',
             height: 'clamp(40px, 6.5vh, 65px)',
             borderRadius: '9999px',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            objectFit: 'cover',
             flexShrink: 0,
             border: '1.5px solid rgba(0, 0, 0, 0.15)',
             boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+            display: 'block',
           }}
         />
 
@@ -362,18 +368,22 @@ const MarqueeGroup = forwardRef(
         >
           {text}
         </div>
-        <div
-          className={`flowing-menu-marquee-img ${imageWidth} ${imageHeight} ${imageRadius} bg-cover bg-center`}
+        <img
+          src={image}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className={`flowing-menu-marquee-img ${imageWidth} ${imageHeight} ${imageRadius}`}
           style={{
-            backgroundImage: `url(${image})`,
             width: 'clamp(120px, 14vw, 195px)',
             height: 'clamp(40px, 6.5vh, 65px)',
             borderRadius: '9999px',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            objectFit: 'cover',
             flexShrink: 0,
             border: '1.5px solid rgba(0, 0, 0, 0.15)',
             boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+            display: 'block',
           }}
         />
       </div>

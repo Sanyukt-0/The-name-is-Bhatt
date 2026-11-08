@@ -108,7 +108,10 @@ const IntroPage = () => {
       .to('.intro-wrapper', {
         yPercent: -100,
         duration: 1.2,
-        ease: 'expo.inOut'
+        ease: 'expo.inOut',
+        onComplete: () => {
+          gsap.set('.intro-wrapper', { display: 'none' })
+        }
       })
   }, [])
 
@@ -123,8 +126,8 @@ const IntroPage = () => {
       </div>
       <div className='japanese-name'>
         <h2>サ</h2>
-        <h2>ヌ</h2>
-        <h2>ー</h2>
+        <h2>ン</h2>
+        <h2>ユ</h2>
         <h2>ク</h2>
         <h2>ト</h2>
       </div>
