@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link
+      rel="preload"
+      href="./fonts/Font1.otf"
+      as="font"
+      type="font/otf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./fonts/Font2.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./albums/collection.json"
+      as="fetch"
+      crossorigin
+    />
+    <meta name="theme-color" content="#07070a" />
+    <meta name="description" content="Game Projects 3D CD Showcase" />
+    <title>Game Projects</title>
+    <style>
+      /* Main and Secondary site fonts */
+      @font-face {
+        font-family: "MainFont";
+        src: url("./fonts/Font1.otf") format("opentype");
+      }
+
+      @font-face {
+        font-family: "SecondaryFont";
+        src: url("./fonts/Font2.woff2") format("woff2");
+      }
+
+      /* Force entire discography interface to use the site's fonts */
+      * {
+        font-family: "SecondaryFont", sans-serif !important;
+      }
+
+      h1,
+      .album-title,
+      .album-name {
+        font-family: "MainFont", sans-serif !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase !important;
+      }
+
+      .eyebrow {
+        font-family: "SecondaryFont", sans-serif !important;
+        letter-spacing: 0.12em !important;
+        font-style: normal !important;
+      }
+
+      .case-action,
+      .album-arrow,
+      .transport-button,
+      .back-label,
+      .back-button {
+        font-family: "MainFont", sans-serif !important;
+        letter-spacing: 0.08em !important;
+        text-transform: uppercase !important;
+      }
+
+      /* Hide About text, Discography text, and GitHub text entirely */
+      .masthead,
+      .wordmark,
+      .about-link,
+      .github-link,
+      .about {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* Clean full-bleed container styling */
+      html,
+      body,
+      #root,
+      .app-shell,
+      .stage {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #07070a;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-CjPsFpyJ.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-y17HTZ8M.css" />
+    <link
+      rel="modulepreload"
+      href="./assets/RectAreaLightUniformsLib-CLOL_P6a.js"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/void-breach/disc-small.avif"
+      type="image/avif"
+      media="(max-width: 650px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/void-breach/cover-small.avif"
+      type="image/avif"
+      media="(max-width: 650px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/void-breach/disc.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/void-breach/cover.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/one-wrong-step/disc.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/one-wrong-step/cover.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/ashen-veil/disc.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="./albums/ashen-veil/cover.avif"
+      type="image/avif"
+      media="(min-width: 651px)"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
